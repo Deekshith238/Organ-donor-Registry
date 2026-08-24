@@ -1,23 +1,23 @@
 const mongoose = require('mongoose');
-const seedData = require('./seed');
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/organ_donor_registry';
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI environment variable is missing');
+      process.exit(1);
+    }
 
-    const conn = await mongoose.connect(mongoUri, {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log('✅ MongoDB connected successfully');
+    console.log(`📡 Host: ${conn.connection.host}`);
+    console.log(`🗄️ Database: ${conn.connection.name}`);
 
-    // Seed only after successful MongoDB connection
-    await seedData();
-
-    return true;
   } catch (error) {
-    console.error(`❌ MongoDB connection failed: ${error.message}`);
-    return false;
+    console.error('❌ MongoDB connection failed:', error.message);
+    process.exit(1);
   }
 };
 
