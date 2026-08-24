@@ -41,14 +41,14 @@ export const apiService = {
         return {
           success: true,
           token: 'demo_token_donor',
-          user: { id: 'donor_demo_id', name: 'Sarah Jenkins', email: credentials.email, role: 'donor', bloodGroup: 'O+', city: 'Chicago' }
+          user: { id: 'donor_demo_id', name: 'Deekshith Goud', email: credentials.email, role: 'donor', bloodGroup: 'O+', city: 'Hyderabad' }
         };
       }
       if (credentials.email === 'recipient@organregistry.org') {
         return {
           success: true,
           token: 'demo_token_recipient',
-          user: { id: 'recipient_demo_id', name: 'Robert Chen', email: credentials.email, role: 'recipient', bloodGroup: 'A+', city: 'New York' }
+          user: { id: 'recipient_demo_id', name: 'Kola Kishore', email: credentials.email, role: 'recipient', bloodGroup: 'A+', city: 'Warangal' }
         };
       }
       return {
@@ -93,10 +93,10 @@ export const apiService = {
       return {
         success: true,
         donors: [
-          { _id: 'dnr_101', fullName: 'Sarah Jenkins', age: 29, bloodGroup: 'O+', organsToDonate: ['Kidney', 'Cornea', 'Liver'], city: 'Chicago', status: 'Pledged' },
-          { _id: 'dnr_102', fullName: 'David Miller', age: 42, bloodGroup: 'A+', organsToDonate: ['Heart', 'Lungs', 'Kidney'], city: 'New York', status: 'Active' },
-          { _id: 'dnr_103', fullName: 'Elena Rostova', age: 35, bloodGroup: 'B-', organsToDonate: ['Liver', 'Pancreas'], city: 'San Francisco', status: 'Pledged' },
-          { _id: 'dnr_104', fullName: 'Marcus Vance', age: 38, bloodGroup: 'AB+', organsToDonate: ['Cornea', 'Tissue'], city: 'Dallas', status: 'Active' }
+          { _id: 'dnr_101', fullName: 'Kola Kishore', age: 29, bloodGroup: 'O+', organsToDonate: ['Kidney', 'Cornea', 'Liver'], city: 'Chicago', status: 'Pledged' },
+          { _id: 'dnr_102', fullName: 'Pintu', age: 42, bloodGroup: 'A+', organsToDonate: ['Heart', 'Lungs', 'Kidney'], city: 'New York', status: 'Active' },
+          { _id: 'dnr_103', fullName: 'Sri Ram', age: 35, bloodGroup: 'B-', organsToDonate: ['Liver', 'Pancreas'], city: 'San Francisco', status: 'Pledged' },
+          { _id: 'dnr_104', fullName: 'Prashanth', age: 38, bloodGroup: 'AB+', organsToDonate: ['Cornea', 'Tissue'], city: 'Dallas', status: 'Active' }
         ]
       };
     }
@@ -127,9 +127,9 @@ export const apiService = {
       return {
         success: true,
         requests: [
-          { _id: 'req_201', patientName: 'Robert Chen', patientAge: 46, organType: 'Kidney', bloodGroup: 'A+', urgencyLevel: 'Critical', hospitalName: 'Mount Sinai Hospital', status: 'Pending' },
-          { _id: 'req_202', patientName: 'Maria Garcia', patientAge: 53, organType: 'Liver', bloodGroup: 'O+', urgencyLevel: 'High', hospitalName: 'Johns Hopkins Hospital', status: 'Matching In Progress' },
-          { _id: 'req_203', patientName: 'James Taylor', patientAge: 31, organType: 'Heart', bloodGroup: 'B-', urgencyLevel: 'Critical', hospitalName: 'Stanford Health Care', status: 'Matched' }
+          { _id: 'req_201', patientName: 'Honey', patientAge: 22, organType: 'Liver', bloodGroup: 'B+', urgencyLevel: 'Critical', hospitalName: 'OMC Hospital', hospitalCity: 'Warangal', status: 'Pending' },
+          { _id: 'req_202', patientName: 'Varsha', patientAge: 20, organType: 'Kidney', bloodGroup: 'O+', urgencyLevel: 'High', hospitalName: 'CARE Hospital', hospitalCity: 'Warangal', status: 'Matching In Progress' },
+          { _id: 'req_203', patientName: 'Deekshitha', patientAge: 20, organType: 'Heart', bloodGroup: 'B-', urgencyLevel: 'Critical', hospitalName: 'Yashoda Hospital', hospitalCity: 'Madhapur', status: 'Matched' }
         ]
       };
     }
