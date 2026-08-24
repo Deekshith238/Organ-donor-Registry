@@ -12,24 +12,24 @@ let mockRequests = [
     urgencyLevel: 'Critical',
     hospitalName: 'OMC Hospital',
     hospitalCity: 'Warangal',
-    attendingDoctor: 'Dr. eddi reddy',
-    contactPhone: '+1 (555) 912-3456',
-    medicalDetails: 'Stage 5 Renal Failure, immediate transplant required.',
+    attendingDoctor: 'Dr. Eddi Reddy',
+    contactPhone: '+91 9876543210',
+    medicalDetails: 'End-stage liver disease, immediate transplant required.',
     status: 'Pending',
     createdAt: new Date(Date.now() - 3600000 * 18).toISOString()
   },
   {
     _id: 'req_202',
-    patientName: 'varsha',
+    patientName: 'Varsha',
     patientAge: 20,
     organType: 'Kidney',
     bloodGroup: 'O+',
     urgencyLevel: 'High',
-    hospitalName: ' CARE Hospital',
-    hospitalCity: 'warangal',
+    hospitalName: 'CARE Hospital',
+    hospitalCity: 'Warangal',
     attendingDoctor: 'Dr. Michael Chang',
-    contactPhone: '+1 (555) 823-4567',
-    medicalDetails: 'Hepatic decompensation.',
+    contactPhone: '+91 9876543211',
+    medicalDetails: 'Stage 5 chronic kidney disease, transplant required.',
     status: 'Matching In Progress',
     createdAt: new Date(Date.now() - 3600000 * 36).toISOString()
   },
@@ -43,7 +43,7 @@ let mockRequests = [
     hospitalName: 'Yashoda Hospital',
     hospitalCity: 'Madhapur',
     attendingDoctor: 'Dr. Sarah Connor',
-    contactPhone: '+1 (555) 734-5678',
+    contactPhone: '+91 9876543212',
     medicalDetails: 'End-stage cardiomyopathy.',
     status: 'Matched',
     matchedDonorId: 'dnr_103',
@@ -69,15 +69,29 @@ const createRequest = async (req, res) => {
       medicalDetails
     } = req.body;
 
-    if (!patientName || !patientAge || !organType || !bloodGroup || !hospitalName || !contactPhone) {
+    if (
+      !patientName ||
+      !patientAge ||
+      !organType ||
+      !bloodGroup ||
+      !hospitalName ||
+      !contactPhone
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide patient name, age, organ type, blood group, hospital, and contact phone.'
+        message:
+          'Please provide patient name, age, organ type, blood group, hospital, and contact phone.'
       });
     }
 
     const requestData = {
-      userId: (req.user && req.user.id && mongoose.Types.ObjectId.isValid(req.user.id)) ? req.user.id : null,
+      userId:
+        req.user &&
+        req.user.id &&
+        mongoose.Types.ObjectId.isValid(req.user.id)
+          ? req.user.id
+          : null,
+
       patientName,
       patientAge: Number(patientAge),
       organType,
@@ -92,14 +106,17 @@ const createRequest = async (req, res) => {
     };
 
     let organRequest;
+
     try {
       organRequest = await OrganRequest.create(requestData);
-    } catch (e) {
+    } catch (error) {
+      // Fallback only when MongoDB is unavailable
       organRequest = {
         _id: 'req_' + Date.now(),
         ...requestData,
         createdAt: new Date().toISOString()
       };
+
       mockRequests.unshift(organRequest);
     }
 
@@ -109,36 +126,73 @@ const createRequest = async (req, res) => {
       request: organRequest
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
-// @desc    Get all organ requests (Admin / User filter)
+// @desc    Get all organ requests
 // @route   GET /api/requests
 // @access  Public
 const getRequests = async (req, res) => {
   try {
-    const { urgency, organ, bloodGroup, status } = req.query;
+    const {
+      urgency,
+      organ,
+      bloodGroup,
+      status
+    } = req.query;
 
-    let dbRequests = [];
-    try {
-      const query = {};
-      if (urgency) query.urgencyLevel = urgency;
-      if (organ) query.organType = organ;
-      if (bloodGroup) query.bloodGroup = bloodGroup;
-      if (status) query.status = status;
+    const query = {};
 
-      dbRequests = await OrganRequest.find(query).sort({ createdAt: -1 });
-    } catch (e) {
-      dbRequests = [];
+    if (urgency) {
+      query.urgencyLevel = urgency;
     }
 
-    let allRequests = dbRequests.length > 0 ? dbRequests : mockRequests;
+    if (organ) {
+      query.organType = organ;
+    }
 
-    if (urgency) allRequests = allRequests.filter(r => r.urgencyLevel === urgency);
-    if (organ) allRequests = allRequests.filter(r => r.organType === organ);
-    if (bloodGroup) allRequests = allRequests.filter(r => r.bloodGroup === bloodGroup);
-    if (status) allRequests = allRequests.filter(r => r.status === status);
+    if (bloodGroup) {
+      query.bloodGroup = bloodGroup;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    let allRequests;
+
+    try {
+      // MongoDB is the primary source of truth
+      allRequests = await OrganRequest
+        .find(query)
+        .sort({ createdAt: -1 });
+
+      // If MongoDB is empty, use mock data
+      if (allRequests.length === 0) {
+        allRequests = mockRequests.filter(request => {
+          if (urgency && request.urgencyLevel !== urgency) return false;
+          if (organ && request.organType !== organ) return false;
+          if (bloodGroup && request.bloodGroup !== bloodGroup) return false;
+          if (status && request.status !== status) return false;
+
+          return true;
+        });
+      }
+    } catch (error) {
+      // MongoDB unavailable → fallback to mock data
+      allRequests = mockRequests.filter(request => {
+        if (urgency && request.urgencyLevel !== urgency) return false;
+        if (organ && request.organType !== organ) return false;
+        if (bloodGroup && request.bloodGroup !== bloodGroup) return false;
+        if (status && request.status !== status) return false;
+
+        return true;
+      });
+    }
 
     res.json({
       success: true,
@@ -146,7 +200,10 @@ const getRequests = async (req, res) => {
       requests: allRequests
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
@@ -155,33 +212,62 @@ const getRequests = async (req, res) => {
 // @access  Private / Admin
 const updateRequestStatus = async (req, res) => {
   try {
-    const { status, matchedDonorId } = req.body;
+    const {
+      status,
+      matchedDonorId
+    } = req.body;
 
     let organRequest;
+
     try {
       const updateData = { status };
-      if (matchedDonorId) updateData.matchedDonorId = matchedDonorId;
-      organRequest = await OrganRequest.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    } catch (e) {
-      const idx = mockRequests.findIndex(r => r._id === req.params.id);
-      if (idx !== -1) {
-        mockRequests[idx].status = status;
-        if (matchedDonorId) mockRequests[idx].matchedDonorId = matchedDonorId;
-        organRequest = mockRequests[idx];
+
+      if (matchedDonorId) {
+        updateData.matchedDonorId = matchedDonorId;
+      }
+
+      organRequest = await OrganRequest.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true }
+      );
+    } catch (error) {
+      const index = mockRequests.findIndex(
+        request => request._id === req.params.id
+      );
+
+      if (index !== -1) {
+        mockRequests[index].status = status;
+
+        if (matchedDonorId) {
+          mockRequests[index].matchedDonorId = matchedDonorId;
+        }
+
+        organRequest = mockRequests[index];
       }
     }
 
     if (!organRequest) {
-      const idx = mockRequests.findIndex(r => r._id === req.params.id);
-      if (idx !== -1) {
-        mockRequests[idx].status = status;
-        if (matchedDonorId) mockRequests[idx].matchedDonorId = matchedDonorId;
-        organRequest = mockRequests[idx];
+      const index = mockRequests.findIndex(
+        request => request._id === req.params.id
+      );
+
+      if (index !== -1) {
+        mockRequests[index].status = status;
+
+        if (matchedDonorId) {
+          mockRequests[index].matchedDonorId = matchedDonorId;
+        }
+
+        organRequest = mockRequests[index];
       }
     }
 
     if (!organRequest) {
-      return res.status(404).json({ success: false, message: 'Organ request not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Organ request not found'
+      });
     }
 
     res.json({
@@ -190,7 +276,10 @@ const updateRequestStatus = async (req, res) => {
       request: organRequest
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
