@@ -7,176 +7,435 @@ const API = axios.create({
   }
 });
 
-// Interceptor to inject JWT token
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('organ_donor_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// =====================================================
+// JWT INTERCEPTOR
+// =====================================================
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('organ_donor_token');
 
-// Helper API calls with graceful fallback mock handling
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// =====================================================
+// RESPONSE INTERCEPTOR
+// =====================================================
+API.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // If backend returns 401, remove invalid token
+    if (error.response?.status === 401) {
+      localStorage.removeItem('organ_donor_token');
+      localStorage.removeItem('organ_donor_user');
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// =====================================================
+// API SERVICE
+// MongoDB + Backend are the ONLY source of data
+// No mock/demo fallback data
+// =====================================================
+
 export const apiService = {
-  // Auth
+
+  // ===================================================
+  // AUTH
+  // ===================================================
+
   login: async (credentials) => {
     try {
       const res = await API.post('/auth/login', credentials);
+
+      if (res.data?.token) {
+        localStorage.setItem(
+          'organ_donor_token',
+          res.data.token
+        );
+      }
+
+      if (res.data?.user) {
+        localStorage.setItem(
+          'organ_donor_user',
+          JSON.stringify(res.data.user)
+        );
+      }
+
       return res.data;
+
     } catch (err) {
-      if (err.response && err.response.data && typeof err.response.data === 'object' && err.response.data.message) {
-        return err.response.data;
-      }
-      // Demo fallback if backend is offline or network fails
-      if (credentials.email === 'admin@organregistry.org') {
-        return {
-          success: true,
-          token: 'demo_token_admin',
-          user: { id: 'admin_demo_id', name: 'System Admin', email: credentials.email, role: 'admin', bloodGroup: 'O+', city: 'Metro Health HQ' }
-        };
-      }
-      if (credentials.email === 'donor@organregistry.org') {
-        return {
-          success: true,
-          token: 'demo_token_donor',
-          user: { id: 'donor_demo_id', name: 'Deekshith Goud', email: credentials.email, role: 'donor', bloodGroup: 'O+', city: 'Hyderabad' }
-        };
-      }
-      if (credentials.email === 'recipient@organregistry.org') {
-        return {
-          success: true,
-          token: 'demo_token_recipient',
-          user: { id: 'recipient_demo_id', name: 'Kola Kishore', email: credentials.email, role: 'recipient', bloodGroup: 'A+', city: 'Warangal' }
-        };
-      }
+      console.error(
+        'Login Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        token: 'demo_token_' + Date.now(),
-        user: { id: 'usr_' + Date.now(), name: credentials.email.split('@')[0], email: credentials.email, role: 'user', bloodGroup: 'O+', city: 'City' }
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Login failed. Please check your backend server.'
       };
     }
   },
+
+
+  // ===================================================
+  // REGISTER
+  // ===================================================
+
   register: async (userData) => {
     try {
-      const res = await API.post('/auth/register', userData);
-      return res.data;
-    } catch (err) {
-      if (err.response && err.response.data && typeof err.response.data === 'object' && err.response.data.message) {
-        return err.response.data;
+      const res = await API.post(
+        '/auth/register',
+        userData
+      );
+
+      if (res.data?.token) {
+        localStorage.setItem(
+          'organ_donor_token',
+          res.data.token
+        );
       }
+
+      if (res.data?.user) {
+        localStorage.setItem(
+          'organ_donor_user',
+          JSON.stringify(res.data.user)
+        );
+      }
+
+      return res.data;
+
+    } catch (err) {
+      console.error(
+        'Register Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        message: 'Account created successfully (Demo Mode)',
-        token: 'demo_token_' + Date.now(),
-        user: { id: 'usr_' + Date.now(), ...userData }
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Registration failed. Please try again.'
       };
     }
   },
+
+
+  // ===================================================
+  // GET CURRENT USER
+  // ===================================================
+
   getMe: async () => {
     try {
       const res = await API.get('/auth/me');
+
       return res.data;
+
     } catch (err) {
-      return { success: false, user: null };
+      console.error(
+        'Get Me Error:',
+        err.response?.data || err.message
+      );
+
+      return {
+        success: false,
+        user: null,
+        message:
+          err.response?.data?.message ||
+          'Unable to fetch user information.'
+      };
     }
   },
 
-  // Donors
+
+  // ===================================================
+  // LOGOUT
+  // ===================================================
+
+  logout: () => {
+    localStorage.removeItem('organ_donor_token');
+    localStorage.removeItem('organ_donor_user');
+
+    return {
+      success: true,
+      message: 'Logged out successfully'
+    };
+  },
+
+
+  // ===================================================
+  // DONORS
+  // ===================================================
+
   getDonors: async (params = {}) => {
     try {
-      const res = await API.get('/donors', { params });
+      const res = await API.get(
+        '/donors',
+        {
+          params
+        }
+      );
+
       return res.data;
+
     } catch (err) {
-      // Fallback data
+      console.error(
+        'Get Donors Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        donors: [
-          { _id: 'dnr_101', fullName: 'Kola Kishore', age: 29, bloodGroup: 'O+', organsToDonate: ['Kidney', 'Cornea', 'Liver'], city: 'Chicago', status: 'Pledged' },
-          { _id: 'dnr_102', fullName: 'Pintu', age: 42, bloodGroup: 'A+', organsToDonate: ['Heart', 'Lungs', 'Kidney'], city: 'New York', status: 'Active' },
-          { _id: 'dnr_103', fullName: 'Sri Ram', age: 35, bloodGroup: 'B-', organsToDonate: ['Liver', 'Pancreas'], city: 'San Francisco', status: 'Pledged' },
-          { _id: 'dnr_104', fullName: 'Prashanth', age: 38, bloodGroup: 'AB+', organsToDonate: ['Cornea', 'Tissue'], city: 'Dallas', status: 'Active' }
-        ]
+        success: false,
+        count: 0,
+        donors: [],
+        message:
+          err.response?.data?.message ||
+          'Unable to fetch donors from server.'
       };
     }
   },
+
+
+  // ===================================================
+  // REGISTER DONOR
+  // ===================================================
+
   registerDonor: async (donorData) => {
     try {
-      const res = await API.post('/donors', donorData);
+      const res = await API.post(
+        '/donors',
+        donorData
+      );
+
       return res.data;
+
     } catch (err) {
-      return { success: true, message: 'Pledge saved locally (Demo Mode)', donor: { ...donorData, _id: 'dnr_' + Date.now(), status: 'Pledged' } };
+      console.error(
+        'Register Donor Error:',
+        err.response?.data || err.message
+      );
+
+      return {
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Unable to register donor.'
+      };
     }
   },
+
+
+  // ===================================================
+  // UPDATE DONOR STATUS
+  // ===================================================
+
   updateDonorStatus: async (id, status) => {
     try {
-      const res = await API.put(`/donors/${id}/status`, { status });
+      const res = await API.put(
+        `/donors/${id}/status`,
+        {
+          status
+        }
+      );
+
       return res.data;
+
     } catch (err) {
-      return { success: true, message: `Status updated to ${status}` };
+      console.error(
+        'Update Donor Status Error:',
+        err.response?.data || err.message
+      );
+
+      return {
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Unable to update donor status.'
+      };
     }
   },
 
-  // Requests
+
+  // ===================================================
+  // ORGAN REQUESTS
+  // ===================================================
+
   getRequests: async (params = {}) => {
     try {
-      const res = await API.get('/requests', { params });
+      const res = await API.get(
+        '/requests',
+        {
+          params
+        }
+      );
+
       return res.data;
+
     } catch (err) {
+      console.error(
+        'Get Requests Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        requests: [
-          { _id: 'req_201', patientName: 'Honey', patientAge: 22, organType: 'Liver', bloodGroup: 'B+', urgencyLevel: 'Critical', hospitalName: 'OMC Hospital', hospitalCity: 'Warangal', status: 'Pending' },
-          { _id: 'req_202', patientName: 'Varsha', patientAge: 20, organType: 'Kidney', bloodGroup: 'O+', urgencyLevel: 'High', hospitalName: 'CARE Hospital', hospitalCity: 'Warangal', status: 'Matching In Progress' },
-          { _id: 'req_203', patientName: 'Deekshitha', patientAge: 20, organType: 'Heart', bloodGroup: 'B-', urgencyLevel: 'Critical', hospitalName: 'Yashoda Hospital', hospitalCity: 'Madhapur', status: 'Matched' }
-        ]
+        success: false,
+        count: 0,
+        requests: [],
+        message:
+          err.response?.data?.message ||
+          'Unable to fetch organ requests from server.'
       };
-    }
-  },
-  createRequest: async (requestData) => {
-    try {
-      const res = await API.post('/requests', requestData);
-      return res.data;
-    } catch (err) {
-      return { success: true, message: 'Organ request submitted (Demo Mode)', request: { ...requestData, _id: 'req_' + Date.now(), status: 'Pending' } };
-    }
-  },
-  updateRequestStatus: async (id, status, matchedDonorId = null) => {
-    try {
-      const res = await API.put(`/requests/${id}/status`, { status, matchedDonorId });
-      return res.data;
-    } catch (err) {
-      return { success: true, message: `Request status updated to ${status}` };
     }
   },
 
-  // Organs & Stats
-  getOrgans: async () => {
+
+  // ===================================================
+  // CREATE ORGAN REQUEST
+  // ===================================================
+
+  createRequest: async (requestData) => {
     try {
-      const res = await API.get('/organs');
+      const res = await API.post(
+        '/requests',
+        requestData
+      );
+
       return res.data;
+
     } catch (err) {
+      console.error(
+        'Create Request Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        organs: [
-          { _id: 'org_1', organType: 'Kidney', bloodGroup: 'O+', hospitalLocation: 'Northwestern Hospital', preservationWindowHours: 24, status: 'Available' },
-          { _id: 'org_2', organType: 'Liver', bloodGroup: 'A+', hospitalLocation: 'Mount Sinai', preservationWindowHours: 12, status: 'Reserved' }
-        ]
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Unable to submit organ request.'
       };
     }
   },
+
+
+  // ===================================================
+  // UPDATE ORGAN REQUEST STATUS
+  // ===================================================
+
+  updateRequestStatus: async (
+    id,
+    status,
+    matchedDonorId = null
+  ) => {
+    try {
+      const res = await API.put(
+        `/requests/${id}/status`,
+        {
+          status,
+          matchedDonorId
+        }
+      );
+
+      return res.data;
+
+    } catch (err) {
+      console.error(
+        'Update Request Status Error:',
+        err.response?.data || err.message
+      );
+
+      return {
+        success: false,
+        message:
+          err.response?.data?.message ||
+          'Unable to update request status.'
+      };
+    }
+  },
+
+
+  // ===================================================
+  // ORGANS
+  // ===================================================
+
+  getOrgans: async () => {
+    try {
+      const res = await API.get(
+        '/organs'
+      );
+
+      return res.data;
+
+    } catch (err) {
+      console.error(
+        'Get Organs Error:',
+        err.response?.data || err.message
+      );
+
+      return {
+        success: false,
+        count: 0,
+        organs: [],
+        message:
+          err.response?.data?.message ||
+          'Unable to fetch organs from server.'
+      };
+    }
+  },
+
+
+  // ===================================================
+  // ORGAN STATISTICS
+  // ===================================================
+
   getStats: async () => {
     try {
-      const res = await API.get('/organs/stats');
+      const res = await API.get(
+        '/organs/stats'
+      );
+
       return res.data;
+
     } catch (err) {
+      console.error(
+        'Get Stats Error:',
+        err.response?.data || err.message
+      );
+
       return {
-        success: true,
-        stats: { totalDonors: 482, totalRequests: 129, totalMatches: 84, availableOrgans: 36, livesSaved: 84 }
+        success: false,
+        stats: {
+          totalDonors: 0,
+          totalRequests: 0,
+          totalMatches: 0,
+          availableOrgans: 0,
+          livesSaved: 0
+        },
+        message:
+          err.response?.data?.message ||
+          'Unable to fetch statistics from server.'
       };
     }
   }
+
 };
+
+
+// =====================================================
+// EXPORT AXIOS INSTANCE
+// =====================================================
 
 export default API;
