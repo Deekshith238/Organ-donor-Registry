@@ -3,15 +3,20 @@ const seedData = require('./seed');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/organ_donor_registry', {
-      serverSelectionTimeoutMS: 3000
+    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/organ_donor_registry';
+
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000
     });
+
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+
+    // Seed only after successful MongoDB connection
     await seedData();
+
     return true;
   } catch (error) {
-    console.warn(`⚠️ MongoDB connection warning: ${error.message}`);
-    console.warn(`💡 Backend operating with Mongoose fallback mode.`);
+    console.error(`❌ MongoDB connection failed: ${error.message}`);
     return false;
   }
 };
