@@ -50,7 +50,7 @@ const organRequestSchema = new mongoose.Schema(
       default: ''
     },
     matchedDonorId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: 'Donor',
       default: null
     },

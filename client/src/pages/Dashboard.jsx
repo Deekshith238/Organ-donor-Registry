@@ -26,7 +26,7 @@ const Dashboard = () => {
       const reqRes = await apiService.getRequests();
       if (reqRes && reqRes.success && reqRes.requests) {
         const userReqs = reqRes.requests.filter(r =>
-          (user && r.userId === user.id) || r.patientName.includes(user ? user.name.split(' ')[0] : 'Robert')
+          (user && r.userId === user.id) || (r.patientName && r.patientName.includes(user && user.name ? user.name.split(' ')[0] : 'Robert'))
         );
         setMyRequests(userReqs.length > 0 ? userReqs : reqRes.requests.slice(0, 2));
       }

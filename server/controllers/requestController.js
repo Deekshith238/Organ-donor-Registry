@@ -217,33 +217,21 @@ const updateRequestStatus = async (req, res) => {
       matchedDonorId
     } = req.body;
 
-    let organRequest;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      try {
+        const updateData = { status };
 
-    try {
-      const updateData = { status };
-
-      if (matchedDonorId) {
-        updateData.matchedDonorId = matchedDonorId;
-      }
-
-      organRequest = await OrganRequest.findByIdAndUpdate(
-        req.params.id,
-        updateData,
-        { new: true }
-      );
-    } catch (error) {
-      const index = mockRequests.findIndex(
-        request => request._id === req.params.id
-      );
-
-      if (index !== -1) {
-        mockRequests[index].status = status;
-
-        if (matchedDonorId) {
-          mockRequests[index].matchedDonorId = matchedDonorId;
+        if (matchedDonorId !== undefined) {
+          updateData.matchedDonorId = matchedDonorId;
         }
 
-        organRequest = mockRequests[index];
+        organRequest = await OrganRequest.findByIdAndUpdate(
+          req.params.id,
+          updateData,
+          { new: true }
+        );
+      } catch (error) {
+        organRequest = null;
       }
     }
 
@@ -255,7 +243,7 @@ const updateRequestStatus = async (req, res) => {
       if (index !== -1) {
         mockRequests[index].status = status;
 
-        if (matchedDonorId) {
+        if (matchedDonorId !== undefined) {
           mockRequests[index].matchedDonorId = matchedDonorId;
         }
 

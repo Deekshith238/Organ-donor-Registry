@@ -193,11 +193,13 @@ const getDonors = async (req, res) => {
 // @access  Public
 const getDonorById = async (req, res) => {
   try {
-    let donor;
-    try {
-      donor = await Donor.findById(req.params.id);
-    } catch (e) {
-      donor = mockDonors.find(d => d._id === req.params.id);
+    let donor = null;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      try {
+        donor = await Donor.findById(req.params.id);
+      } catch (e) {
+        donor = null;
+      }
     }
 
     if (!donor) {
@@ -220,15 +222,13 @@ const getDonorById = async (req, res) => {
 const updateDonorStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    let donor;
+    let donor = null;
 
-    try {
-      donor = await Donor.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    } catch (e) {
-      const idx = mockDonors.findIndex(d => d._id === req.params.id);
-      if (idx !== -1) {
-        mockDonors[idx].status = status;
-        donor = mockDonors[idx];
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      try {
+        donor = await Donor.findByIdAndUpdate(req.params.id, { status }, { new: true });
+      } catch (e) {
+        donor = null;
       }
     }
 
