@@ -1,26 +1,57 @@
-const mongoose = require('mongoose');
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const connectDB = require('./config/db');
 
-const connectDB = async () => {
-  try {
-    // Check whether MongoDB URI exists
-    if (!process.env.MONGODB_URI) {
-      console.error('❌ MONGODB_URI environment variable is missing');
-      process.exit(1);
-    }
+dotenv.config();
 
-    // Connect to MongoDB Atlas
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
+const app = express();
 
-    console.log(`✅ MongoDB connected successfully`);
-    console.log(`📡 Host: ${conn.connection.host}`);
-    console.log(`🗄️ Database: ${conn.connection.name}`);
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1);
-  }
-};
+// Database connection
+connectDB();
 
-module.exports = connectDB;
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    status: 'OK',
+    service: 'Organ Donor Registry API Service',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/donors', require('./routes/donorRoutes'));
+app.use('/api/organs', require('./routes/organRoutes'));
+app.use('/api/requests', require('./routes/requestRoutes'));
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.stack);
+
+  res.status(500).json({
+    success: false,
+    message: 'Server Internal Error',
+    error: err.message
+  });
+});
+
+// Start Server
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Organ Donor Registry Backend listening on port ${PORT}`);
+});
