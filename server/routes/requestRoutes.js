@@ -4,9 +4,10 @@ const { createRequest, getRequests, updateRequestStatus } = require('../controll
 const { protect, optionalAuth } = require('../middleware/authMiddleware');
 const { admin } = require('../middleware/adminMiddleware');
 
-router.route('/')
-  .get(getRequests)
-  .post(optionalAuth, createRequest);
+router.get('/', getRequests);
+router.get('', getRequests);
+router.post('/', optionalAuth, createRequest);
+router.post('', optionalAuth, createRequest);
 
 router.route('/:id/status')
   .put(protect, admin, updateRequestStatus);

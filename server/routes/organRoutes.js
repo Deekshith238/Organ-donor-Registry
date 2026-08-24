@@ -5,7 +5,9 @@ const { protect } = require('../middleware/authMiddleware');
 const { admin } = require('../middleware/adminMiddleware');
 
 router.get('/', getOrgans);
+router.get('', getOrgans);
 router.get('/stats', getStats);
 router.post('/', protect, admin, createOrgan);
+router.post('', protect, admin, createOrgan);
 
 module.exports = router;

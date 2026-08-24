@@ -4,9 +4,10 @@ const { registerDonor, getDonors, getDonorById, updateDonorStatus } = require('.
 const { protect, optionalAuth } = require('../middleware/authMiddleware');
 const { admin } = require('../middleware/adminMiddleware');
 
-router.route('/')
-  .get(getDonors)
-  .post(optionalAuth, registerDonor);
+router.get('/', getDonors);
+router.get('', getDonors);
+router.post('/', optionalAuth, registerDonor);
+router.post('', optionalAuth, registerDonor);
 
 router.route('/:id')
   .get(getDonorById);
