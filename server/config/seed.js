@@ -165,29 +165,29 @@ const seedData = async () => {
     await OrganRequest.deleteMany({});
     const demoRequests = [
       {
-        patientName: 'Koushik',
-        patientAge: 30,
-        organType: 'Kidney',
-        bloodGroup: 'A+',
+        patientName: 'Honey',
+        patientAge: 22,
+        organType: 'Liver',
+        bloodGroup: 'B+',
         urgencyLevel: 'Critical',
-        hospitalName: 'Mount Sinai Hospital',
-        hospitalCity: 'hyderabad',
-        attendingDoctor: 'Dr. eddi reddy',
-        contactPhone: '+1 (555) 912-3456',
-        medicalDetails: 'Stage 5 Renal Failure, immediate transplant required.',
+        hospitalName: 'OMC Hospital',
+        hospitalCity: 'Warangal',
+        attendingDoctor: 'Dr. Eddi Reddy',
+        contactPhone: '+91 9876543210',
+        medicalDetails: 'End-stage liver disease, immediate transplant required.',
         status: 'Pending'
       },
       {
-        patientName: 'Mukundha',
-        patientAge: 23,
-        organType: 'Liver',
+        patientName: 'Varsha',
+        patientAge: 20,
+        organType: 'Kidney',
         bloodGroup: 'O+',
         urgencyLevel: 'High',
         hospitalName: 'CARE Hospital',
-        hospitalCity: 'Baltimore',
+        hospitalCity: 'Warangal',
         attendingDoctor: 'Dr. Michael Chang',
-        contactPhone: '+1 (555) 823-4567',
-        medicalDetails: 'Hepatic decompensation.',
+        contactPhone: '+91 9876543211',
+        medicalDetails: 'Stage 5 chronic kidney disease, transplant required.',
         status: 'Matching In Progress'
       },
       {
@@ -199,7 +199,7 @@ const seedData = async () => {
         hospitalName: 'Yashoda Hospital',
         hospitalCity: 'Madhapur',
         attendingDoctor: 'Dr. Sarah Connor',
-        contactPhone: '+1 (555) 734-5678',
+        contactPhone: '+91 9876543212',
         medicalDetails: 'End-stage cardiomyopathy.',
         status: 'Matched'
       }
