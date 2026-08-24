@@ -14,21 +14,35 @@ app.use(express.json());
 // Database connection
 connectDB();
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health check (supports both /api/health and /health)
+const healthHandler = (req, res) => {
   res.json({
     success: true,
     status: 'OK',
     service: 'Organ Donor Registry API Service',
     timestamp: new Date().toISOString()
   });
-});
+};
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
-// API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/donors', require('./routes/donorRoutes'));
-app.use('/api/organs', require('./routes/organRoutes'));
-app.use('/api/requests', require('./routes/requestRoutes'));
+// API Routes (supports both /api/* and /* route paths)
+const authRoutes = require('./routes/authRoutes');
+const donorRoutes = require('./routes/donorRoutes');
+const organRoutes = require('./routes/organRoutes');
+const requestRoutes = require('./routes/requestRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
+app.use('/api/donors', donorRoutes);
+app.use('/donors', donorRoutes);
+
+app.use('/api/organs', organRoutes);
+app.use('/organs', organRoutes);
+
+app.use('/api/requests', requestRoutes);
+app.use('/requests', requestRoutes);
 
 // 404 Handler
 app.use((req, res) => {
